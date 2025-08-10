@@ -8,6 +8,7 @@ import shutil
 import pandas as pd
 import numpy as np
 from pymongo import MongoClient
+from bson import ObjectId
 from portfolio.portfolio_analyzer import PortfolioAnalyzer
 
 client = MongoClient("mongodb://localhost:27017/")
@@ -30,6 +31,11 @@ class StockModel(BaseModel):
     shares: float
     buy_price: float
 
+class StockUpdateModel(BaseModel):
+    symbol: str
+    shares: float
+    buy_price: float
+
 def to_serializable(val):
     if isinstance(val, pd.Series):
         return val.tolist()
@@ -45,13 +51,39 @@ def to_serializable(val):
 
 @app.post("/stocks")
 def add_stock(stock: StockModel):
-    stocks_collection.insert_one(stock.dict())
-    return {"message": "Stock added"}
+    result = stocks_collection.insert_one(stock.dict())
+    return {"message": "Stock added", "id": str(result.inserted_id)}
 
 @app.get("/stocks")
 def get_stocks():
-    stocks = list(stocks_collection.find({}, {"_id": 0}))
+    stocks = list(stocks_collection.find({}))
+    # Convert ObjectId to string for JSON serialization
+    for stock in stocks:
+        stock["_id"] = str(stock["_id"])
     return {"stocks": stocks}
+
+@app.put("/stocks/{stock_id}")
+def update_stock(stock_id: str, stock: StockUpdateModel):
+    try:
+        result = stocks_collection.update_one(
+            {"_id": ObjectId(stock_id)},
+            {"$set": stock.dict()}
+        )
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Stock not found")
+        return {"message": "Stock updated"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="Invalid stock ID")
+
+@app.delete("/stocks/{stock_id}")
+def delete_stock(stock_id: str):
+    try:
+        result = stocks_collection.delete_one({"_id": ObjectId(stock_id)})
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Stock not found")
+        return {"message": "Stock deleted"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="Invalid stock ID")
 
 @app.delete("/stocks")
 def clear_stocks():

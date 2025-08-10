@@ -1,5 +1,5 @@
 {
-    "timestamp": "2025-07-15T12:02:27.202189",
+    "timestamp": "2025-08-10T17:39:37.512590",
     "symbols": [
         "IREDA",
         "RPOWER"
@@ -7,42 +7,42 @@
     "portfolio_summary": {
         "shares": [
             22.0,
-            22.0
+            20.0
         ],
         "buy_prices": [
             35.0,
             45.0
         ],
         "current_prices": [
-            160.19000244140625,
-            64.5
+            142.32000732421875,
+            43.029998779296875
         ],
         "weights": [
-            0.4375,
-            0.5625
+            0.46107784431137727,
+            0.5389221556886228
         ],
-        "total_invested": 1760.0,
-        "current_value": 4943.1800537109375,
-        "total_pnl": 3183.1800537109375
+        "total_invested": 1670.0,
+        "current_value": 3991.64013671875,
+        "total_pnl": 2321.64013671875
     },
     "technical_metrics": {
-        "annual_return": 0.829298675856001,
-        "annual_volatility": 0.4735723684696652,
-        "sharpe_ratio": 1.6244585349055867,
-        "sortino_ratio": 2.8974932052322955,
-        "max_drawdown": -0.3743992198096631,
-        "var_95": -0.7039707577465862,
-        "var_99": -0.8964100297165021,
-        "cvar_95": -0.8504268134299514,
-        "cvar_99": -1.0785564639435288,
-        "portfolio_beta": 0.8464375,
-        "information_ratio": 1.4977619537813793,
-        "treynor_ratio": 0.9088664855420524,
-        "individual_returns": "IREDA.NS     0.794544\nRPOWER.NS    0.856330\ndtype: float64",
-        "individual_volatility": "IREDA.NS     0.603368\nRPOWER.NS    0.580853\ndtype: float64",
+        "annual_return": 0.633453894051409,
+        "annual_volatility": 0.4705899471662563,
+        "sharpe_ratio": 1.2185850919777754,
+        "sortino_ratio": 2.204059582285171,
+        "max_drawdown": -0.3742447505416282,
+        "var_95": -0.6905498040633513,
+        "var_99": -0.8896811466650487,
+        "cvar_95": -0.8530082579227254,
+        "cvar_99": -1.0808260245050578,
+        "portfolio_beta": 0.9827544910179642,
+        "information_ratio": 1.0910855557864458,
+        "treynor_ratio": 0.5835169406933054,
+        "individual_returns": "IREDA.NS     0.689945\nRPOWER.NS    0.585123\ndtype: float64",
+        "individual_volatility": "IREDA.NS     0.591797\nRPOWER.NS    0.584794\ndtype: float64",
         "weights": [
-            0.4375,
-            0.5625
+            0.46107784431137727,
+            0.5389221556886228
         ],
         "tickers": [
             "IREDA.NS",
@@ -56,56 +56,56 @@
     "fundamental_data": {
         "IREDA": {
             "pe_ratio": NaN,
-            "pb_ratio": 3.5041015,
-            "ps_ratio": 20.257954,
+            "pb_ratio": 3.2236295,
+            "ps_ratio": 18.63949,
             "peg_ratio": NaN,
-            "roe": 0.18043,
-            "roa": 0.02386,
-            "profit_margin": 0.72726,
-            "debt_to_equity": 647.77,
-            "current_ratio": 5.693,
-            "quick_ratio": 5.666,
-            "revenue_growth": 0.341,
-            "earnings_growth": 0.496,
+            "roe": 0.14899,
+            "roa": NaN,
+            "profit_margin": 0.72799003,
+            "debt_to_equity": 549.465,
+            "current_ratio": 25.568,
+            "quick_ratio": 25.164,
+            "revenue_growth": -0.325,
+            "earnings_growth": -0.364,
             "dividend_yield": 0,
             "payout_ratio": 0.0
         },
         "RPOWER": {
-            "pe_ratio": 9.214286,
-            "pb_ratio": 1.5859356,
-            "ps_ratio": 3.5065694,
+            "pe_ratio": 5.6993375,
+            "pb_ratio": 1.0580281,
+            "ps_ratio": 2.3771296,
             "peg_ratio": NaN,
-            "roe": 0.21090001,
-            "roa": 0.01762,
-            "profit_margin": 0.38875,
+            "roe": NaN,
+            "roa": NaN,
+            "profit_margin": 0.41336,
             "debt_to_equity": 92.752,
-            "current_ratio": 0.445,
-            "quick_ratio": 0.265,
-            "revenue_growth": 0.003,
+            "current_ratio": NaN,
+            "quick_ratio": NaN,
+            "revenue_growth": -0.054,
             "earnings_growth": NaN,
             "dividend_yield": 0,
             "payout_ratio": 0.0
         }
     },
     "risk_analysis": {
-        "portfolio_volatility": 0.4735723684696652,
-        "max_drawdown": -0.3743992198096631,
-        "var_95": -0.7039707577465862,
-        "cvar_95": -0.8504268134299514,
-        "portfolio_beta": 0.8464375,
-        "sharpe_ratio": 1.6244585349055867,
-        "sortino_ratio": 2.8974932052322955
+        "portfolio_volatility": 0.4705899471662563,
+        "max_drawdown": -0.3742447505416282,
+        "var_95": -0.6905498040633513,
+        "cvar_95": -0.8530082579227254,
+        "portfolio_beta": 0.9827544910179642,
+        "sharpe_ratio": 1.2185850919777754,
+        "sortino_ratio": 2.204059582285171
     },
-    "diversification_analysis": "=== DIVERSIFICATION ANALYSIS ===\n\nSector Exposure:\n  Utilities: 56.25%\n  Financial Services: 43.75%\n\nConcentration Metrics:\n  Herfindahl-Hirschman Index: 0.508\n  Diversification Ratio: 1.25\n\n\u26a0\ufe0f  HIGH CONCENTRATION RISK:\n   - Financial Services: 43.75%\n   - Utilities: 56.25%\n\n\ud83d\udca1 RECOMMENDATION: Consider adding stocks from more sectors",
-    "valuation_analysis": "=== VALUATION ANALYSIS ===\n\n\ud83d\udcca INDIAN RENEWABLE ENERGY (IREDA):\n   P/E: N/A\n   P/B: 3.50 - \ud83d\udd34 EXPENSIVE\n   ROE: 18.04% - \ud83d\udfe2 EXCELLENT\n   Debt/Equity: 647.77 - \ud83d\udd34 HIGH DEBT\n\n\ud83d\udcca RELIANCE POWER LTD. (RPOWER):\n   P/E: 9.21 - \ud83d\udfe2 UNDERVALUED\n   P/B: 1.59 - \ud83d\udfe1 REASONABLE\n   ROE: 21.09% - \ud83d\udfe2 EXCELLENT\n   Debt/Equity: 92.75 - \ud83d\udd34 HIGH DEBT\n",
+    "diversification_analysis": "=== DIVERSIFICATION ANALYSIS ===\n\nSector Exposure:\n  Utilities: 53.89%\n  Financial Services: 46.11%\n\nConcentration Metrics:\n  Herfindahl-Hirschman Index: 0.503\n  Diversification Ratio: 1.25\n\n\u26a0\ufe0f  HIGH CONCENTRATION RISK:\n   - Financial Services: 46.11%\n   - Utilities: 53.89%\n\n\ud83d\udca1 RECOMMENDATION: Consider adding stocks from more sectors",
+    "valuation_analysis": "=== VALUATION ANALYSIS ===\n\n\ud83d\udcca INDIAN RENEWABLE ENERGY (IREDA):\n   P/E: N/A\n   P/B: 3.22 - \ud83d\udd34 EXPENSIVE\n   ROE: 14.90% - \ud83d\udfe1 GOOD\n   Debt/Equity: 549.47 - \ud83d\udd34 HIGH DEBT\n\n\ud83d\udcca RELIANCE POWER LTD. (RPOWER):\n   P/E: 5.70 - \ud83d\udfe2 UNDERVALUED\n   P/B: 1.06 - \ud83d\udfe1 REASONABLE\n   Debt/Equity: 92.75 - \ud83d\udd34 HIGH DEBT\n",
     "correlation_analysis": "=== CORRELATION ANALYSIS ===\n\nAverage Pairwise Correlation: 0.277\n\ud83d\udfe2 LOW CORRELATION - Good diversification benefit",
     "correlation_matrix": {
         "IREDA": {
             "IREDA": 1.0,
-            "RPOWER": 0.277319530642744
+            "RPOWER": 0.2771939262289918
         },
         "RPOWER": {
-            "IREDA": 0.277319530642744,
+            "IREDA": 0.2771939262289918,
             "RPOWER": 1.0
         }
     },

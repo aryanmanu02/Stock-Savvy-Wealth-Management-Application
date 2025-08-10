@@ -12,6 +12,16 @@ export async function getStocks() {
   return response.data.stocks;
 }
 
+export async function updateStock(stockId, stock) {
+  const response = await axios.put(`${API_BASE}/stocks/${stockId}`, stock);
+  return response.data;
+}
+
+export async function deleteStock(stockId) {
+  const response = await axios.delete(`${API_BASE}/stocks/${stockId}`);
+  return response.data;
+}
+
 export async function clearStocks() {
   const response = await axios.delete(`${API_BASE}/stocks`);
   return response.data;
