@@ -203,7 +203,7 @@ function App() {
                 mb: 1
               }}
             >
-              Portfolio Analyzer
+              Stock Savvy Wealth Management
             </Typography>
             <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 400 }}>
               Advanced Portfolio Analysis & AI Insights
