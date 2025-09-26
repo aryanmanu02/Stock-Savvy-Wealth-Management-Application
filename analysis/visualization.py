@@ -11,8 +11,33 @@ def create_visualizations(data, shares, buy_prices, current_prices, weights, sym
     wedges, texts, autotexts = ax1.pie(weights, labels=symbols, autopct='%1.1f%%', colors=colors, startangle=90)
     ax1.set_title('Portfolio Composition', fontsize=14, fontweight='bold')
     ax2 = plt.subplot(3, 3, 2)
-    returns = metrics['individual_returns']
-    volatilities = metrics['individual_volatility']
+    
+    # Fix: Convert individual_returns and individual_volatility dictionaries to lists
+    individual_returns_dict = metrics['individual_returns']
+    individual_volatility_dict = metrics['individual_volatility']
+    
+    returns = []
+    volatilities = []
+    for symbol in symbols:
+        # Get values from dictionaries, with fallback to 0.0
+        ret = individual_returns_dict.get(symbol, 0.0)
+        vol = individual_volatility_dict.get(symbol, 0.0)
+        
+        # Convert to float if they're strings
+        if isinstance(ret, str):
+            try:
+                ret = float(ret)
+            except ValueError:
+                ret = 0.0
+        if isinstance(vol, str):
+            try:
+                vol = float(vol)
+            except ValueError:
+                vol = 0.0
+                
+        returns.append(ret)
+        volatilities.append(vol)
+    
     scatter = ax2.scatter(volatilities, returns, s=[w*1000 for w in weights], c=colors, alpha=0.7)
     ax2.scatter(metrics['annual_volatility'], metrics['annual_return'], s=200, c='red', marker='D', label='Portfolio')
     ax2.set_xlabel('Annual Volatility')

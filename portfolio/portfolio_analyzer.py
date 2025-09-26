@@ -12,7 +12,7 @@ warnings.filterwarnings('ignore')
 from analysis import technical, fundamental, risk, diversification, correlation, monte_carlo, visualization, report, ai_insights
 
 # Configuration
-API_KEY = "AIzaSyBK9pnZBaWe4-rSPhT-yUcsQqCAdNI6nwM"  # Replace with your actual API key
+API_KEY = "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"  # Perplexity AI API key
 RISK_FREE_RATE = 0.06  # 6% annual risk-free rate
 BENCHMARK_PE = 25  # NSE benchmark P/E ratio
 
@@ -151,8 +151,8 @@ class PortfolioAnalyzer:
             'portfolio_beta': portfolio_beta,
             'information_ratio': information_ratio,
             'treynor_ratio': treynor_ratio,
-            'individual_returns': returns.mean() * trading_days,
-            'individual_volatility': returns.std() * np.sqrt(trading_days),
+            'individual_returns': (returns.mean() * trading_days).to_dict(),
+            'individual_volatility': (returns.std() * np.sqrt(trading_days)).to_dict(),
             'weights': self.weights,
             'tickers': list(self.data.keys()),
             'sectors': sectors
@@ -229,13 +229,26 @@ class PortfolioAnalyzer:
             "diversification_analysis": diversification_report,
             "valuation_analysis": valuation_analysis,
             "correlation_analysis": correlation_report,
-            "correlation_matrix": correlation_matrix.to_dict(),
+            "correlation_matrix": correlation_matrix.to_dict('records') if hasattr(correlation_matrix, 'to_dict') else correlation_matrix.tolist(),
             "recommendations": self.generate_recommendations()
         }
         
+        # Save to JSON with custom serializer
+        def json_serializer(obj):
+            if hasattr(obj, 'tolist'):
+                return obj.tolist()
+            elif hasattr(obj, 'to_dict'):
+                return obj.to_dict()
+            elif isinstance(obj, (np.integer, np.floating)):
+                return float(obj)
+            elif isinstance(obj, np.ndarray):
+                return obj.tolist()
+            else:
+                return str(obj)
+        
         # Save to JSON
         with open("comprehensive_portfolio_analysis.json", "w") as f:
-            json.dump(llm_data, f, indent=4, default=str)
+            json.dump(llm_data, f, indent=4, default=json_serializer)
         
         print("✓ Comprehensive analysis saved to 'comprehensive_portfolio_analysis.json'")
         return llm_data

@@ -1,0 +1,191 @@
+{
+    "timestamp": "2025-09-26T11:03:31.450840",
+    "symbols": [
+        "IREDA",
+        "RPOWER",
+        "RVNL",
+        "WAAREERTL"
+    ],
+    "portfolio_summary": {
+        "shares": [
+            20.0,
+            45.0,
+            150.0,
+            15.0
+        ],
+        "buy_prices": [
+            66.0,
+            35.0,
+            268.0,
+            1503.0
+        ],
+        "current_prices": [
+            148.83999633789062,
+            45.209999084472656,
+            342.79998779296875,
+            1015.5999755859375
+        ],
+        "weights": [
+            0.02010968921389397,
+            0.023994515539305303,
+            0.6124314442413162,
+            0.34346435100548445
+        ],
+        "total_invested": 65640.0,
+        "current_value": 71665.24768829346,
+        "total_pnl": 6025.247688293457
+    },
+    "technical_metrics": {
+        "annual_return": 0.24652204617419649,
+        "annual_volatility": 0.3495965020586044,
+        "sharpe_ratio": 0.5335352186759837,
+        "sortino_ratio": 1.1405420614229607,
+        "max_drawdown": -0.2134646534296201,
+        "var_95": -0.4655208246862489,
+        "var_99": -0.6304828220404505,
+        "cvar_95": -0.5687043383844768,
+        "cvar_99": -0.6433406783502292,
+        "portfolio_beta": 0.8668640310786107,
+        "information_ratio": 0.36190878749978755,
+        "treynor_ratio": 0.21516874560144478,
+        "individual_returns": {
+            "IREDA.NS": 0.014348601423381086,
+            "RPOWER.NS": 0.4952548058134754,
+            "RVNL.NS": 0.11102517213322732,
+            "WAAREERTL.NS": 0.4843437000702342
+        },
+        "individual_volatility": {
+            "IREDA.NS": 0.3333544929958134,
+            "RPOWER.NS": 0.6001383151391609,
+            "RVNL.NS": 0.37157273284302833,
+            "WAAREERTL.NS": 0.48765761418673664
+        },
+        "weights": [
+            0.02010968921389397,
+            0.023994515539305303,
+            0.6124314442413162,
+            0.34346435100548445
+        ],
+        "tickers": [
+            "IREDA.NS",
+            "RPOWER.NS",
+            "RVNL.NS",
+            "WAAREERTL.NS"
+        ],
+        "sectors": [
+            "Financial Services",
+            "Utilities",
+            "Industrials",
+            "Utilities"
+        ]
+    },
+    "fundamental_data": {
+        "IREDA": {
+            "pe_ratio": NaN,
+            "pb_ratio": 3.371311,
+            "ps_ratio": 19.808641,
+            "peg_ratio": NaN,
+            "roe": 0.14899,
+            "roa": NaN,
+            "profit_margin": 0.72799003,
+            "debt_to_equity": 549.465,
+            "current_ratio": 25.568,
+            "quick_ratio": 25.164,
+            "revenue_growth": -0.325,
+            "earnings_growth": -0.364,
+            "dividend_yield": 0,
+            "payout_ratio": 0.0
+        },
+        "RPOWER": {
+            "pe_ratio": 5.988079,
+            "pb_ratio": 1.1116302,
+            "ps_ratio": 2.5178466,
+            "peg_ratio": NaN,
+            "roe": NaN,
+            "roa": NaN,
+            "profit_margin": 0.41336,
+            "debt_to_equity": 92.752,
+            "current_ratio": NaN,
+            "quick_ratio": NaN,
+            "revenue_growth": -0.054,
+            "earnings_growth": NaN,
+            "dividend_yield": 0,
+            "payout_ratio": 0.0
+        },
+        "RVNL": {
+            "pe_ratio": 59.93007,
+            "pb_ratio": 7.468084,
+            "ps_ratio": 3.6295004,
+            "peg_ratio": NaN,
+            "roe": NaN,
+            "roa": NaN,
+            "profit_margin": 0.06033,
+            "debt_to_equity": 56.623,
+            "current_ratio": NaN,
+            "quick_ratio": NaN,
+            "revenue_growth": -0.041,
+            "earnings_growth": -0.393,
+            "dividend_yield": 0.5,
+            "payout_ratio": 0.3682
+        },
+        "WAAREERTL": {
+            "pe_ratio": 36.984707,
+            "pb_ratio": 23.245594,
+            "ps_ratio": 5.4802756,
+            "peg_ratio": NaN,
+            "roe": NaN,
+            "roa": NaN,
+            "profit_margin": 0.14624,
+            "debt_to_equity": 6.017,
+            "current_ratio": NaN,
+            "quick_ratio": NaN,
+            "revenue_growth": 1.552,
+            "earnings_growth": 2.052,
+            "dividend_yield": 0,
+            "payout_ratio": 0.0
+        }
+    },
+    "risk_analysis": {
+        "portfolio_volatility": 0.3495965020586044,
+        "max_drawdown": -0.2134646534296201,
+        "var_95": -0.4655208246862489,
+        "cvar_95": -0.5687043383844768,
+        "portfolio_beta": 0.8668640310786107,
+        "sharpe_ratio": 0.5335352186759837,
+        "sortino_ratio": 1.1405420614229607
+    },
+    "diversification_analysis": "=== DIVERSIFICATION ANALYSIS ===\n\nSector Exposure:\n  Industrials: 61.24%\n  Utilities: 36.75%\n  Financial Services: 2.01%\n\nConcentration Metrics:\n  Herfindahl-Hirschman Index: 0.511\n  Diversification Ratio: 0.00\n\n\u26a0\ufe0f  HIGH CONCENTRATION RISK:\n   - Industrials: 61.24%\n\n\ud83d\udca1 RECOMMENDATION: Consider adding stocks from more sectors",
+    "valuation_analysis": "=== VALUATION ANALYSIS ===\n\n\ud83d\udcca INDIAN RENEWABLE ENERGY (IREDA):\n   P/E: N/A\n   P/B: 3.37 - \ud83d\udd34 EXPENSIVE\n   ROE: 14.90% - \ud83d\udfe1 GOOD\n   Debt/Equity: 549.47 - \ud83d\udd34 HIGH DEBT\n\n\ud83d\udcca RELIANCE POWER LTD. (RPOWER):\n   P/E: 5.99 - \ud83d\udfe2 UNDERVALUED\n   P/B: 1.11 - \ud83d\udfe1 REASONABLE\n   Debt/Equity: 92.75 - \ud83d\udd34 HIGH DEBT\n\n\ud83d\udcca RAIL VIKAS NIGAM LIMITED (RVNL):\n   P/E: 59.93 - \ud83d\udd34 OVERVALUED\n   P/B: 7.47 - \ud83d\udd34 EXPENSIVE\n   Debt/Equity: 56.62 - \ud83d\udd34 HIGH DEBT\n\n\ud83d\udcca WAAREE RENEWABLE TECH LTD (WAAREERTL):\n   P/E: 36.98 - \ud83d\udfe1 FAIRLY VALUED\n   P/B: 23.25 - \ud83d\udd34 EXPENSIVE\n   Debt/Equity: 6.02 - \ud83d\udd34 HIGH DEBT\n",
+    "correlation_analysis": "=== CORRELATION ANALYSIS ===\n\nAverage Pairwise Correlation: 0.441\n\ud83d\udfe1 MODERATE CORRELATION - Some diversification benefit",
+    "correlation_matrix": [
+        {
+            "IREDA": 1.0,
+            "RPOWER": 0.41290662412122603,
+            "RVNL": 0.6801607482935811,
+            "WAAREERTL": 0.4518625910539444
+        },
+        {
+            "IREDA": 0.41290662412122603,
+            "RPOWER": 1.0,
+            "RVNL": 0.37041275230365245,
+            "WAAREERTL": 0.26650934232093654
+        },
+        {
+            "IREDA": 0.6801607482935811,
+            "RPOWER": 0.37041275230365245,
+            "RVNL": 1.0,
+            "WAAREERTL": 0.4623365182438585
+        },
+        {
+            "IREDA": 0.4518625910539444,
+            "RPOWER": 0.26650934232093654,
+            "RVNL": 0.4623365182438585,
+            "WAAREERTL": 1.0
+        }
+    ],
+    "recommendations": [
+        "HIGH VOLATILITY: Add defensive stocks or bonds to reduce portfolio risk",
+        "LIMITED DIVERSIFICATION: Consider adding stocks from more sectors",
+        "SECTOR CONCENTRATION: Reduce exposure to Industrials"
+    ]
+}
