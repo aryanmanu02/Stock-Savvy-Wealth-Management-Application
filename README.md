@@ -1,4 +1,4 @@
-# Portfolio Analysis System
+# Stock Savvy - Wealth Management Application
 
 A comprehensive full-stack portfolio analysis application for Indian equities, featuring advanced financial algorithms, risk assessment, and AI-powered insights.
 
