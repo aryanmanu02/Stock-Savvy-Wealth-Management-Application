@@ -1,0 +1,37 @@
+How it works now:
+Add Stock:
+Use the form to add one stock at a time (symbol, shares, buy price).
+Each stock is stored in MongoDB via the backend.
+Portfolio Summary & Metrics:
+The frontend fetches and displays all stocks in the portfolio (from MongoDB).
+Performance metrics are shown after analysis.
+Clear Portfolio:
+The "Clear Portfolio" button removes all stocks from MongoDB and updates the UI.
+Analyze Portfolio:
+The "Analyze Portfolio" button triggers analysis using all stocks in MongoDB.
+After analysis, the chart and AI insights are displayed.
+What was changed:
+API helpers updated for MongoDB endpoints.
+PortfolioForm now adds one stock at a time and can clear all stocks.
+Results always shows the current portfolio and metrics, and only shows chart/AI insights after analysis.
+App manages all state, fetches stocks/metrics, and coordinates add/clear/analyze actions.
+How to use:
+Start MongoDB (if not already running).
+Start your FastAPI backend (uvicorn backend.main:app --reload).
+Start your React frontend (npm start in the frontend directory).
+Add stocks, view your portfolio, and analyze!
+
+You will now see, for each stock in the Portfolio Summary:
+Weight (as a percentage)
+Current Price
+And below the list:
+Portfolio Total Buy Price
+Portfolio Total Current Price
+Portfolio Profit/Loss (absolute and percentage)
+How it works:
+These values are calculated using the backend's analysis results (so you must click "Analyze Portfolio" to see them).
+The summary is always up-to-date after analysis.
+What to do next:
+Save all files and reload your frontend.
+Add stocks, click "Analyze Portfolio", and you’ll see the new detailed summary.
+Let me know if you want further enhancements (e.g., per-stock profit/loss, charts, etc.)!
