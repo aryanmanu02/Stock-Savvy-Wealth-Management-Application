@@ -5,14 +5,54 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import json
 import requests
+import os
+from pathlib import Path
 from datetime import datetime, timedelta
 import warnings
 warnings.filterwarnings('ignore')
 
 from analysis import technical, fundamental, risk, diversification, correlation, monte_carlo, visualization, report, ai_insights
 
+def _read_local_env_file():
+    env_map = {}
+    env_path = Path(__file__).resolve().parents[1] / ".env"
+    if not env_path.exists():
+        return env_map
+
+    try:
+        with open(env_path, "r", encoding="utf-8") as env_file:
+            for raw_line in env_file:
+                line = raw_line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+
+                key, value = line.split("=", 1)
+                env_map[key.strip()] = value.strip().strip('"').strip("'")
+    except Exception:
+        return {}
+
+    return env_map
+
+def _get_config_value(candidates, default=None):
+    for key in candidates:
+        value = os.getenv(key)
+        if value:
+            return value
+
+    env_map = _read_local_env_file()
+    for key in candidates:
+        value = env_map.get(key)
+        if value:
+            return value
+
+    return default
+
 # Configuration
-API_KEY = "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"  # Perplexity AI API key
+PERPLEXITY_API_KEY = _get_config_value(
+    ["PERPLEXITY_API_KEY"],
+    default="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",
+)
+GEMINI_API_KEY = _get_config_value(["GEMINI_API_KEY", "GEMINI_API_Key", "Gemini_API_Key"])
 RISK_FREE_RATE = 0.06  # 6% annual risk-free rate
 BENCHMARK_PE = 25  # NSE benchmark P/E ratio
 
@@ -258,8 +298,8 @@ class PortfolioAnalyzer:
         return report.generate_recommendations(self.metrics, self.weights)
 
     def get_llm_insights(self, file_path="comprehensive_portfolio_analysis.json"):
-        """Get AI insights using Gemini API"""
-        ai_insights.get_llm_insights(API_KEY, file_path)
+        """Get AI insights using Perplexity with Gemini fallback"""
+        ai_insights.get_llm_insights(PERPLEXITY_API_KEY, GEMINI_API_KEY, file_path)
 
     def run_complete_analysis(self):
         """Run the complete portfolio analysis"""

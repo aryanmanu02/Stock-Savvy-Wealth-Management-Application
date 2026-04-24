@@ -1,23 +1,14 @@
-# AI/LLM insights functions using Perplexity AI
+# AI/LLM insights functions using Perplexity AI with Gemini fallback
 
-def get_llm_insights(API_KEY, file_path="comprehensive_portfolio_analysis.json"):
+def get_llm_insights(perplexity_api_key, gemini_api_key=None, file_path="comprehensive_portfolio_analysis.json"):
     import json
     import requests
-    if not API_KEY or API_KEY == "YOUR_PERPLEXITY_API_KEY":
-        print("⚠️  API_KEY not set. Please update the API_KEY variable with your Perplexity API key.")
-        return
-    
-    # Basic API key validation
-    if not API_KEY.startswith("pplx-"):
-        print("⚠️  API_KEY format appears incorrect. Perplexity API keys should start with 'pplx-'")
-        print("🔄 Generating fallback insights instead...")
-        try:
-            with open(file_path, "r") as f:
-                data = json.load(f)
-            generate_fallback_insights(data)
-        except Exception as e:
-            print(f"[ERROR] Failed to generate fallback insights: {e}")
-        return
+    import os
+
+    if not gemini_api_key:
+        # Accept both common env spellings.
+        gemini_api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GEMINI_API_Key") or os.getenv("Gemini_API_Key")
+
     try:
         with open(file_path, "r") as f:
             data = json.load(f)
@@ -25,17 +16,21 @@ def get_llm_insights(API_KEY, file_path="comprehensive_portfolio_analysis.json")
         print(f"[ERROR] File '{file_path}' not found.")
         return
     
-    # Enhanced prompt with current market trends and comprehensive analysis
-    prompt = f"""You are an expert financial advisor and portfolio analyst specializing in Indian stock markets with deep knowledge of current market trends, economic conditions, and future outlook. Analyze this comprehensive portfolio data and provide detailed, actionable insights.
+    # Keep the prompt compact so the model has room to return the full report.
+    prompt = f"""You are an expert financial advisor and portfolio analyst specializing in Indian stock markets.
 
-### PORTFOLIO OVERVIEW:
-Symbols: {', '.join(data['symbols'])}
-Total Invested: ₹{data['portfolio_summary']['total_invested']:,.2f}
-Current Value: ₹{data['portfolio_summary']['current_value']:,.2f}
-    Total P&L: ₹{data['portfolio_summary']['total_pnl']:,.2f}
-    
-    ### INDIVIDUAL STOCK DETAILS:
-    """
+Write a complete portfolio report with all 12 sections below. Use concise but complete bullets. Do not omit any section.
+Keep the answer structured with exact headings 1 to 12. Do not stop after the executive summary.
+Do not include any follow-up questions, prompts for more context, or closing questionnaires.
+
+PORTFOLIO OVERVIEW
+- Symbols: {', '.join(data['symbols'])}
+- Total Invested: ₹{data['portfolio_summary']['total_invested']:,.2f}
+- Current Value: ₹{data['portfolio_summary']['current_value']:,.2f}
+- Total P&L: ₹{data['portfolio_summary']['total_pnl']:,.2f}
+
+INDIVIDUAL STOCK DETAILS
+"""
     
     # Add individual stock details with current prices from yfinance
     for i, symbol in enumerate(data['symbols']):
@@ -46,36 +41,34 @@ Current Value: ₹{data['portfolio_summary']['current_value']:,.2f}
             weight = data['portfolio_summary']['weights'][i] if i < len(data['portfolio_summary'].get('weights', [])) else 0
             
             prompt += f"""
-    {symbol}:
-    - Current Market Price: ₹{current_price:.2f}
-    - Buy Price: ₹{buy_price:.2f}
-    - Shares Held: {shares:,.0f}
-    - Portfolio Weight: {weight:.1%}
-    - Individual P&L: ₹{(current_price - buy_price) * shares:,.2f}
-    - Individual Return: {((current_price - buy_price) / buy_price * 100):.1f}%
-    """
+{symbol}
+- Current Market Price: ₹{current_price:.2f}
+- Buy Price: ₹{buy_price:.2f}
+- Shares Held: {shares:,.0f}
+- Portfolio Weight: {weight:.1%}
+- Individual P&L: ₹{(current_price - buy_price) * shares:,.2f}
+- Individual Return: {((current_price - buy_price) / buy_price * 100):.1f}%
+"""
     
     prompt += f"""
-    
-    ### PERFORMANCE METRICS:
+
+PORTFOLIO METRICS
 - Expected Annual Return: {data['technical_metrics']['annual_return']:.2%}
 - Annual Volatility: {data['technical_metrics']['annual_volatility']:.2%}
 - Sharpe Ratio: {data['technical_metrics']['sharpe_ratio']:.3f}
 - Sortino Ratio: {data['technical_metrics']['sortino_ratio']:.3f}
 - Maximum Drawdown: {data['technical_metrics']['max_drawdown']:.2%}
 - Portfolio Beta: {data['technical_metrics']['portfolio_beta']:.3f}
-
-### RISK ANALYSIS:
 - VaR (95%): {data['risk_analysis']['var_95']:.2%}
 - CVaR (95%): {data['risk_analysis']['cvar_95']:.2%}
 
-### DIVERSIFICATION:
+DIVERSIFICATION SUMMARY
 {data['diversification_analysis']}
 
-### VALUATION:
+VALUATION SUMMARY
 {data['valuation_analysis']}
 
-### CURRENT RECOMMENDATIONS:
+CURRENT RECOMMENDATIONS
 {chr(10).join(data['recommendations'])}
 
 ### COMPREHENSIVE ANALYSIS REQUIRED:
@@ -165,11 +158,44 @@ CRITICAL: Always use the "Current Market Price" provided in the Individual Stock
         print(f"⚠️  Prompt too long ({len(prompt)} chars), truncating to {max_chars} chars")
         prompt = prompt[:max_chars] + "\n\n[Analysis truncated due to length limits]"
     
-    try:
+    def save_insights(text, source):
+        print("\n" + "="*80)
+        print(f"🤖 AI PORTFOLIO INSIGHTS ({source})")
+        print("="*80)
+        print(text)
+        with open("ai_portfolio_insights.txt", "w", encoding='utf-8') as f:
+            f.write(text)
+        print(f"\n✓ AI insights saved to 'ai_portfolio_insights.txt'")
+
+    def clean_ai_response(text):
+        """Remove trailing follow-up questions or prompt-like text from model output."""
+        lines = text.splitlines()
+        cutoff_index = None
+        for index, line in enumerate(lines):
+            stripped = line.strip().lower()
+            if stripped.startswith("to help me refine this report further"):
+                cutoff_index = index
+                break
+            if stripped.startswith("what is your risk tolerance"):
+                cutoff_index = index
+                break
+            if stripped.startswith("are there any specific sectors"):
+                cutoff_index = index
+                break
+            if stripped.startswith("do you have any existing investment accounts"):
+                cutoff_index = index
+                break
+
+        if cutoff_index is not None:
+            text = "\n".join(lines[:cutoff_index]).rstrip()
+
+        return text
+
+    def try_perplexity():
         # Perplexity AI API endpoint
         url = "https://api.perplexity.ai/chat/completions"
         headers = {
-            "Authorization": f"Bearer {API_KEY}",
+            "Authorization": f"Bearer {perplexity_api_key}",
             "Content-Type": "application/json"
         }
         payload = {
@@ -189,7 +215,7 @@ CRITICAL: Always use the "Current Market Price" provided in the Individual Stock
             "stream": False
         }
 
-        # Retries with exponential backoff for transient errors/timeouts
+        # Retries with exponential backoff for transient errors/timeouts.
         max_attempts = 3
         timeout_seconds = 200
         for attempt in range(1, max_attempts + 1):
@@ -219,29 +245,114 @@ CRITICAL: Always use the "Current Market Price" provided in the Individual Stock
         result = response.json()
 
         if "choices" in result and result["choices"]:
-            insights = result["choices"][0]["message"]["content"]
-            print("\n" + "="*80)
-            print("🤖 AI PORTFOLIO INSIGHTS (Perplexity AI)")
-            print("="*80)
-            print(insights)
-            with open("ai_portfolio_insights.txt", "w", encoding='utf-8') as f:
-                f.write(insights)
-            print(f"\n✓ AI insights saved to 'ai_portfolio_insights.txt'")
+            return clean_ai_response(result["choices"][0]["message"]["content"])
         else:
-            print("No insights generated from AI")
-            print(f"Response structure: {result}")
-    except requests.exceptions.RequestException as e:
-        print(f"[ERROR] Failed to get AI insights: {e}")
-        if hasattr(e, 'response') and e.response is not None:
-            print(f"Response status: {e.response.status_code}")
-            print(f"Response text: {e.response.text}")
-        
-        # Fallback: Generate basic insights without API
+            raise RuntimeError(f"No insights generated from Perplexity. Response structure: {result}")
+
+    def try_gemini():
+        # Gemini API endpoint (REST). Hardcode the model requested by the user,
+        # then retry on 429 (quota/rate-limit) before failing over.
+        import time
+
+        base_url = "https://generativelanguage.googleapis.com/v1beta/models"
+        model_candidates = ["gemma-3-1b-it"]
+
+        payload = {
+            "contents": [
+                {
+                    "parts": [
+                        {
+                            "text": (
+                                "You are an expert financial advisor specializing in Indian stock markets. "
+                                "Provide detailed, actionable investment advice with specific recommendations.\n\n"
+                                + prompt
+                            )
+                        }
+                    ]
+                }
+            ],
+            "generationConfig": {
+                "temperature": 0.7,
+                "maxOutputTokens": 4096
+            }
+        }
+
+        last_error = None
+        for model_name in model_candidates:
+            url = f"{base_url}/{model_name}:generateContent"
+            try:
+                response = None
+                max_attempts = 3
+                for attempt in range(1, max_attempts + 1):
+                    response = requests.post(
+                        url,
+                        params={"key": gemini_api_key},
+                        json=payload,
+                        timeout=200,
+                    )
+                    print(
+                        f"Gemini model '{model_name}' response status code: {response.status_code} "
+                        f"(attempt {attempt}/{max_attempts})"
+                    )
+
+                    # Retry only for rate limit/quota and transient server errors.
+                    if response.status_code in (429, 500, 502, 503, 504) and attempt < max_attempts:
+                        backoff = 2 ** attempt
+                        print(f"Gemini transient error on '{model_name}'. Retrying in {backoff}s...")
+                        time.sleep(backoff)
+                        continue
+                    break
+
+                response.raise_for_status()
+                result = response.json()
+
+                candidates = result.get("candidates", [])
+                if not candidates:
+                    raise RuntimeError(
+                        f"No candidates generated from Gemini model '{model_name}'. Response structure: {result}"
+                    )
+
+                parts = candidates[0].get("content", {}).get("parts", [])
+                text_chunks = [p.get("text", "") for p in parts if p.get("text")]
+                if not text_chunks:
+                    raise RuntimeError(
+                        f"No text content generated from Gemini model '{model_name}'. Response structure: {result}"
+                    )
+
+                return clean_ai_response("\n".join(text_chunks))
+            except Exception as e:
+                last_error = e
+                continue
+
+        raise RuntimeError(f"All Gemini model attempts failed. Last error: {last_error}")
+
+    try:
+        # Try Perplexity first when key is present and valid format.
+        if perplexity_api_key and perplexity_api_key != "YOUR_PERPLEXITY_API_KEY" and perplexity_api_key.startswith("pplx-"):
+            try:
+                insights = try_perplexity()
+                save_insights(insights, "Perplexity AI")
+                return
+            except Exception as e:
+                print(f"[WARN] Perplexity failed: {e}")
+                print("🔄 Attempting Gemini fallback...")
+        else:
+            print("⚠️  Perplexity key missing/invalid. Attempting Gemini fallback...")
+
+        # Fallback to Gemini if key is available.
+        if gemini_api_key:
+            try:
+                insights = try_gemini()
+                save_insights(insights, "Gemini")
+                return
+            except Exception as e:
+                print(f"[WARN] Gemini fallback failed: {e}")
+
+        # Final fallback: Generate local insights when both APIs fail.
         print("\n🔄 Generating fallback insights...")
         generate_fallback_insights(data)
     except Exception as e:
         print(f"[ERROR] Unexpected error: {e}")
-        # Fallback: Generate basic insights without API
         print("\n🔄 Generating fallback insights...")
         generate_fallback_insights(data)
 

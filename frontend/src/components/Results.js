@@ -19,17 +19,7 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  Chip,
-  Divider,
   Alert,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
-  Badge
 } from '@mui/material';
 import { 
   Edit as EditIcon, 
@@ -38,7 +28,6 @@ import {
   TrendingUp as TrendingUpIcon,
   TrendingDown as TrendingDownIcon,
   Download as DownloadIcon,
-  ExpandMore as ExpandMoreIcon,
   Psychology as PsychologyIcon,
   Assessment as AssessmentIcon,
   Security as SecurityIcon,
@@ -57,315 +46,297 @@ import { getFileUrl } from '../api';
 function AIInsightsDisplay({ aiText }) {
   if (!aiText) return null;
 
-  // Clean markdown and artifacts for production-ready display
+  // Clean markdown and artifacts for production-ready display.
   const sanitizeAIText = (text) => {
     let t = text;
-    // Remove bold/italic markdown **__ and * _ wrappers
     t = t.replace(/\*\*(.*?)\*\*/g, '$1');
     t = t.replace(/__(.*?)__/g, '$1');
     t = t.replace(/\*(.*?)\*/g, '$1');
     t = t.replace(/_(.*?)_/g, '$1');
-    // Remove markdown headers like ##, ###
     t = t.replace(/^#{1,6}\s+/gm, '');
-    // Remove horizontal rules --- *** ___
     t = t.replace(/^\s*[-*_]{3,}\s*$/gm, '');
-    // Remove footnote markers like [1], [2]
     t = t.replace(/\[(\d+)\]/g, '');
-    // Normalize bullet lines: remove standalone bullets and convert bullets to dashes
     t = t.replace(/^\s*•\s*$/gm, '');
     t = t.replace(/^\s*•\s*/gm, '- ');
-    // Trim excessive whitespace at line ends
     t = t.replace(/[\t ]+$/gm, '');
-    // Collapse multiple blank lines
     t = t.replace(/\n{3,}/g, '\n\n');
     return t.trim();
   };
 
-  // Parse the AI text into sections
+  // Parse the AI text into separate numbered sections.
   const parseAIText = (text) => {
     const lines = text.split('\n');
-
-    // Prefer numbered sections (e.g., 1. Executive Summary ... up to 11.)
-    const numberedSections = [];
-    let currentTitle = null;
-    let buffer = [];
-
-    const flushNumbered = () => {
-      if (currentTitle) {
-        numberedSections.push({
-          title: currentTitle.replace(/\s*:\s*$/, ''),
-          content: buffer.join('\n').trim()
-        });
-      }
-      currentTitle = null;
-      buffer = [];
-    };
-
-    for (const raw of lines) {
-      const m = raw.match(/^(\s*)(\d{1,2})\.\s+(.+)/);
-      if (m) {
-        flushNumbered();
-        currentTitle = m[3].trim();
-      } else if (currentTitle) {
-        buffer.push(raw);
-      }
-    }
-    flushNumbered();
-    if (numberedSections.length >= 5) return numberedSections;
-
-    // Fallback A: detect emoji/title headers that end with ':'
-    const colonSections = [];
-    let colonTitle = null;
-    let colonBuf = [];
-    const flushColon = () => {
-      if (colonTitle) {
-        colonSections.push({ title: colonTitle.replace(/\s*:\s*$/, ''), content: colonBuf.join('\n').trim() });
-      }
-      colonTitle = null;
-      colonBuf = [];
-    };
-    for (const raw of lines) {
-      const t = raw.trim();
-      const isColonHeader = (
-        t.endsWith(':') &&
-        !t.match(/^\d+\./) &&
-        !t.startsWith('- ') &&
-        t.length <= 120
-      );
-      if (isColonHeader) {
-        flushColon();
-        colonTitle = t;
-      } else if (colonTitle) {
-        colonBuf.push(raw);
-      }
-    }
-    flushColon();
-    if (colonSections.length >= 2) return colonSections;
-
-    // Fallback B: header detection (uppercase or title-case lines without punctuation)
     const sections = [];
     let currentSection = null;
-    let currentContent = [];
-    for (const line of lines) {
-      const trimmedLine = line.trim();
-      const isHeader = (
-        trimmedLine &&
-        (trimmedLine === trimmedLine.toUpperCase() || trimmedLine.match(/^[A-Z][A-Z\s&]+$/)) &&
-        !trimmedLine.includes(':') &&
-        !trimmedLine.includes('-') &&
-        !trimmedLine.includes('₹') &&
-        !trimmedLine.includes('%')
-      );
-      if (isHeader) {
-        if (currentSection) {
-          sections.push({ title: currentSection, content: currentContent.join('\n').trim() });
-        }
-        currentSection = trimmedLine;
-        currentContent = [];
-      } else if (trimmedLine) {
-        currentContent.push(line);
+
+    const pushSection = () => {
+      if (currentSection) {
+        sections.push({
+          number: currentSection.number,
+          title: currentSection.title.replace(/\s*:\s*$/, '').trim(),
+          content: currentSection.content.join('\n').trim(),
+        });
+      }
+      currentSection = null;
+    };
+
+    for (const rawLine of lines) {
+      const line = rawLine.trimEnd();
+      const numberedMatch = line.trim().match(/^(\d{1,2})\.\s+(.+)$/);
+
+      if (numberedMatch) {
+        pushSection();
+        currentSection = {
+          number: Number(numberedMatch[1]),
+          title: numberedMatch[2].trim(),
+          content: [],
+        };
+        continue;
+      }
+
+      if (currentSection) {
+        currentSection.content.push(line);
       }
     }
-    if (currentSection) {
-      sections.push({ title: currentSection, content: currentContent.join('\n').trim() });
-    }
-    if (sections.length > 0) return sections;
 
-    // Fallback C: single block
-    return [{ title: 'AI Insights', content: text }];
+    pushSection();
+
+    if (sections.length > 0) {
+      return sections.sort((a, b) => a.number - b.number);
+    }
+
+    // Fallback: split on all-caps header lines if numbered headings are missing.
+    const fallbackSections = [];
+    let fallback = null;
+    for (const rawLine of lines) {
+      const line = rawLine.trim();
+      const isHeader = (
+        line &&
+        (line === line.toUpperCase() || line.match(/^[A-Z][A-Z\s&()/-]+:?$/)) &&
+        !line.includes('₹') &&
+        !line.includes('%') &&
+        !line.startsWith('- ')
+      );
+
+      if (isHeader) {
+        if (fallback) {
+          fallbackSections.push({
+            title: fallback.title.replace(/\s*:\s*$/, '').trim(),
+            content: fallback.content.join('\n').trim(),
+          });
+        }
+        fallback = { title: line, content: [] };
+      } else if (fallback) {
+        fallback.content.push(rawLine);
+      }
+    }
+
+    if (fallback) {
+      fallbackSections.push({
+        title: fallback.title.replace(/\s*:\s*$/, '').trim(),
+        content: fallback.content.join('\n').trim(),
+      });
+    }
+
+    return fallbackSections.length > 0
+      ? fallbackSections
+      : [{ title: 'AI Insights', content: text }];
   };
 
   const cleaned = sanitizeAIText(aiText);
   const sections = parseAIText(cleaned);
 
-  // Controlled expand/collapse state
-  const [expanded, setExpanded] = React.useState({});
-  useEffect(() => {
-    const init = {};
-    sections.slice(0, 3).forEach((_, i) => { init[i] = true; });
-    setExpanded(init);
-  }, [aiText]);
-
-  const expandAll = () => {
-    const all = {};
-    sections.forEach((_, i) => { all[i] = true; });
-    setExpanded(all);
-  };
-  const collapseAll = () => setExpanded({});
-  const expandKey = () => {
-    const keys = ['executive', 'summary', 'risk', 'recommendation', 'actionable'];
-    const next = {};
-    sections.forEach((s, i) => {
-      const lt = (s.title || '').toLowerCase();
-      if (keys.some(k => lt.includes(k))) next[i] = true;
-    });
-    setExpanded(next);
+  const getHeaderTheme = (index) => {
+    const themes = [
+      { border: '#4caf50', bg: 'rgba(76, 175, 80, 0.14)' },
+      { border: '#2196f3', bg: 'rgba(33, 150, 243, 0.14)' },
+      { border: '#ff9800', bg: 'rgba(255, 152, 0, 0.14)' },
+      { border: '#9c27b0', bg: 'rgba(156, 39, 176, 0.14)' },
+      { border: '#00bcd4', bg: 'rgba(0, 188, 212, 0.14)' },
+      { border: '#f44336', bg: 'rgba(244, 67, 54, 0.14)' },
+    ];
+    return themes[index % themes.length];
   };
 
-  const getSectionIcon = (title) => {
-    const lowerTitle = title.toLowerCase();
-    if (lowerTitle.includes('executive') || lowerTitle.includes('summary')) return <StarIcon />;
-    if (lowerTitle.includes('market') || lowerTitle.includes('trends')) return <TrendingUpIcon />;
-    if (lowerTitle.includes('health') || lowerTitle.includes('assessment')) return <AssessmentIcon />;
-    if (lowerTitle.includes('stock') || lowerTitle.includes('analysis')) return <BusinessIcon />;
-    if (lowerTitle.includes('sector') || lowerTitle.includes('allocation')) return <TimelineIcon />;
-    if (lowerTitle.includes('risk') || lowerTitle.includes('management')) return <SecurityIcon />;
-    if (lowerTitle.includes('timing') || lowerTitle.includes('opportunities')) return <TrendingFlatIcon />;
-    if (lowerTitle.includes('alternative') || lowerTitle.includes('investments')) return <AttachMoneyIcon />;
-    if (lowerTitle.includes('rebalancing') || lowerTitle.includes('strategy')) return <AnalyticsIcon />;
-    if (lowerTitle.includes('outlook') || lowerTitle.includes('strategy')) return <TimelineIcon />;
-    if (lowerTitle.includes('actionable') || lowerTitle.includes('steps')) return <CheckCircleIcon />;
-    if (lowerTitle.includes('events') || lowerTitle.includes('impact')) return <InfoIcon />;
-    if (lowerTitle.includes('disclaimers')) return <WarningIcon />;
-    return <PsychologyIcon />;
-  };
+  const renderSectionContent = (content) => {
+    if (!content) {
+      return (
+        <Typography sx={{ color: '#888888', fontStyle: 'italic' }}>
+          No content available.
+        </Typography>
+      );
+    }
 
-  const getSectionColor = (title) => {
-    const lowerTitle = title.toLowerCase();
-    if (lowerTitle.includes('executive') || lowerTitle.includes('summary')) return '#4caf50';
-    if (lowerTitle.includes('market') || lowerTitle.includes('trends')) return '#2196f3';
-    if (lowerTitle.includes('health') || lowerTitle.includes('assessment')) return '#ff9800';
-    if (lowerTitle.includes('stock') || lowerTitle.includes('analysis')) return '#9c27b0';
-    if (lowerTitle.includes('sector') || lowerTitle.includes('allocation')) return '#00bcd4';
-    if (lowerTitle.includes('risk') || lowerTitle.includes('management')) return '#f44336';
-    if (lowerTitle.includes('timing') || lowerTitle.includes('opportunities')) return '#795548';
-    if (lowerTitle.includes('alternative') || lowerTitle.includes('investments')) return '#607d8b';
-    if (lowerTitle.includes('rebalancing') || lowerTitle.includes('strategy')) return '#3f51b5';
-    if (lowerTitle.includes('outlook') || lowerTitle.includes('strategy')) return '#009688';
-    if (lowerTitle.includes('actionable') || lowerTitle.includes('steps')) return '#4caf50';
-    if (lowerTitle.includes('events') || lowerTitle.includes('impact')) return '#ff5722';
-    if (lowerTitle.includes('disclaimers')) return '#ffc107';
-    return '#666666';
+    const lines = content.split('\n');
+    const elements = [];
+
+    const isTableLine = (line) => {
+      const trimmed = (line || '').trim();
+      return trimmed.startsWith('|') && trimmed.endsWith('|') && trimmed.includes('|');
+    };
+
+    const parseTableRows = (tableLines) => {
+      return tableLines
+        .map((line) => line.split('|').slice(1, -1).map((cell) => cell.trim()))
+        .filter((row) => row.some((cell) => cell.length > 0));
+    };
+
+    let i = 0;
+    while (i < lines.length) {
+      const rawLine = lines[i];
+      const trimmedLine = rawLine.trim();
+
+      if (!trimmedLine) {
+        elements.push(<Box key={`blank-${i}`} sx={{ height: 6 }} />);
+        i += 1;
+        continue;
+      }
+
+      if (isTableLine(rawLine)) {
+        const tableLines = [];
+        const startIndex = i;
+        while (i < lines.length && isTableLine(lines[i])) {
+          tableLines.push(lines[i].trim());
+          i += 1;
+        }
+
+        const rows = parseTableRows(tableLines);
+        if (rows.length >= 2) {
+          const header = rows[0];
+          let body = rows.slice(1);
+
+          if (body.length > 0 && body[0].every((cell) => /^:?-{2,}:?$/.test(cell))) {
+            body = body.slice(1);
+          }
+
+          elements.push(
+            <TableContainer
+              key={`table-${startIndex}`}
+              component={Paper}
+              sx={{
+                backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+                borderRadius: 1,
+                mb: 1,
+                overflowX: 'auto',
+              }}
+            >
+              <Table size="small">
+                <TableHead>
+                  <TableRow sx={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}>
+                    {header.map((cell, idx) => (
+                      <TableCell key={`h-${startIndex}-${idx}`} sx={{ color: '#ffffff', fontWeight: 700 }}>
+                        {cell}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {body.map((row, rowIdx) => (
+                    <TableRow key={`r-${startIndex}-${rowIdx}`}>
+                      {header.map((_, colIdx) => (
+                        <TableCell key={`c-${startIndex}-${rowIdx}-${colIdx}`} sx={{ color: '#cccccc' }}>
+                          {row[colIdx] || ''}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          );
+          continue;
+        }
+
+        for (let fallbackIdx = 0; fallbackIdx < tableLines.length; fallbackIdx += 1) {
+          const line = tableLines[fallbackIdx];
+          elements.push(
+            <Typography key={`table-fallback-${startIndex}-${fallbackIdx}`} sx={{ color: '#cccccc', mb: 0.75, whiteSpace: 'pre-wrap' }}>
+              {line}
+            </Typography>
+          );
+        }
+        continue;
+      }
+
+      if (trimmedLine.startsWith('- ')) {
+        elements.push(
+          <Box key={`bullet-${i}`} sx={{ display: 'flex', alignItems: 'flex-start', mb: 0.75 }}>
+            <Typography sx={{ color: '#cccccc', mr: 1, mt: 0.5 }}>•</Typography>
+            <Typography sx={{ color: '#cccccc', flex: 1 }}>
+              {trimmedLine.substring(2)}
+            </Typography>
+          </Box>
+        );
+        i += 1;
+        continue;
+      }
+
+      if (trimmedLine.match(/^\d+\./)) {
+        elements.push(
+          <Box key={`number-${i}`} sx={{ display: 'flex', alignItems: 'flex-start', mb: 0.75 }}>
+            <Typography sx={{ color: '#cccccc', mr: 1, mt: 0.5, fontWeight: 600 }}>
+              {trimmedLine.match(/^\d+/)[0]}.
+            </Typography>
+            <Typography sx={{ color: '#cccccc', flex: 1 }}>
+              {trimmedLine.replace(/^\d+\.\s*/, '')}
+            </Typography>
+          </Box>
+        );
+        i += 1;
+        continue;
+      }
+
+      elements.push(
+        <Typography key={`text-${i}`} sx={{ color: '#cccccc', mb: 0.75, whiteSpace: 'pre-wrap' }}>
+          {trimmedLine}
+        </Typography>
+      );
+      i += 1;
+    }
+
+    return elements;
   };
 
   return (
     <Box sx={{ mt: 2 }}>
-      <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
-        <Button size="small" variant="outlined" onClick={expandAll} sx={{ color: '#ffffff', borderColor: '#666666' }}>Expand All</Button>
-        <Button size="small" variant="outlined" onClick={collapseAll} sx={{ color: '#ffffff', borderColor: '#666666' }}>Collapse All</Button>
-        <Button size="small" variant="outlined" onClick={expandKey} sx={{ color: '#ffffff', borderColor: '#666666' }}>Expand Key Sections</Button>
-      </Box>
-      {sections.map((section, index) => (
-        <Accordion 
-          key={index}
-          expanded={!!expanded[index]}
-          onChange={(event, isExpanded) => setExpanded(prev => ({ ...prev, [index]: isExpanded }))}
-          sx={{ 
-            backgroundColor: 'rgba(17, 17, 17, 0.8)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            '&:before': { display: 'none' },
-            mb: 1
-          }}
-        >
-          <AccordionSummary
-            expandIcon={<ExpandMoreIcon sx={{ color: '#ffffff' }} />}
-            sx={{ 
-              backgroundColor: 'rgba(255, 255, 255, 0.05)',
-              '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.08)' }
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Box sx={{ color: getSectionColor(section.title) }}>
-                {getSectionIcon(section.title)}
-              </Box>
-              <Typography 
-                variant="h6" 
-                sx={{ 
-                  color: '#ffffff', 
-                  fontWeight: 600,
-                  fontSize: '1.1rem'
-                }}
-              >
-                {section.title}
-              </Typography>
-              <Chip label={`#${index + 1}`} size="small" sx={{ ml: 1, color: '#ffffff', borderColor: '#444', backgroundColor: 'transparent', border: '1px solid #444' }} />
-            </Box>
-          </AccordionSummary>
-          <AccordionDetails sx={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}>
-            <Box sx={{ 
-              color: '#cccccc',
-              lineHeight: 1.6,
-              '& p': { marginBottom: 2 },
-              '& ul': { paddingLeft: 3 },
-              '& li': { marginBottom: 1 },
-              '& strong': { color: '#ffffff' },
-              '& em': { color: '#ffeb3b' }
-            }}>
-              {section.content.split('\n').map((line, lineIndex) => {
-                const trimmedLine = line.trim();
-                if (!trimmedLine) return <br key={lineIndex} />;
-                
-                // Handle bullet points
-                if (trimmedLine.startsWith('- ')) {
-                  return (
-                    <Box key={lineIndex} sx={{ display: 'flex', alignItems: 'flex-start', mb: 1 }}>
-                      <Typography sx={{ color: '#4caf50', mr: 1, mt: 0.5 }}>•</Typography>
-                      <Typography sx={{ color: '#cccccc', flex: 1 }}>
-                        {trimmedLine.substring(2)}
-                      </Typography>
-                    </Box>
-                  );
-                }
-                
-                // Handle numbered lists
-                if (trimmedLine.match(/^\d+\./)) {
-                  return (
-                    <Box key={lineIndex} sx={{ display: 'flex', alignItems: 'flex-start', mb: 1 }}>
-                      <Typography sx={{ color: '#2196f3', mr: 1, mt: 0.5, fontWeight: 600 }}>
-                        {trimmedLine.match(/^\d+/)[0]}.
-                      </Typography>
-                      <Typography sx={{ color: '#cccccc', flex: 1 }}>
-                        {trimmedLine.replace(/^\d+\.\s*/, '')}
-                      </Typography>
-                    </Box>
-                  );
-                }
-                
-                // Handle stock symbols and prices
-                if (trimmedLine.includes('₹') || trimmedLine.includes('Current Market Price') || trimmedLine.includes('Target Price')) {
-                  return (
-                    <Typography key={lineIndex} sx={{ 
-                      color: '#ffffff', 
-                      fontWeight: 600, 
-                      mb: 1,
-                      backgroundColor: 'rgba(76, 175, 80, 0.1)',
-                      padding: 1,
-                      borderRadius: 1,
-                      border: '1px solid rgba(76, 175, 80, 0.3)'
-                    }}>
-                      {trimmedLine}
-                    </Typography>
-                  );
-                }
-                
-                // Handle recommendations
-                if (trimmedLine.includes('Recommendation:') || trimmedLine.includes('Action Plan:')) {
-                  return (
-                    <Typography key={lineIndex} sx={{ 
-                      color: '#ffeb3b', 
-                      fontWeight: 600, 
-                      mb: 1,
-                      backgroundColor: 'rgba(255, 235, 59, 0.1)',
-                      padding: 1,
-                      borderRadius: 1,
-                      border: '1px solid rgba(255, 235, 59, 0.3)'
-                    }}>
-                      {trimmedLine}
-                    </Typography>
-                  );
-                }
-                
-                // Regular text
-                return (
-                  <Typography key={lineIndex} sx={{ color: '#cccccc', mb: 1 }}>
-                    {trimmedLine}
+      <Grid container spacing={2}>
+        {sections.map((section, index) => (
+          <Grid item xs={12} key={`${section.number || index}-${section.title}`}>
+            {(() => {
+              const headerTheme = getHeaderTheme(index);
+              return (
+            <Card
+              sx={{
+                backgroundColor: 'rgba(17, 17, 17, 0.8)',
+                border: `1px solid ${headerTheme.border}`,
+                boxShadow: 'none',
+              }}
+            >
+              <CardContent sx={{ p: 0 }}>
+                <Box
+                  sx={{
+                    px: 2,
+                    py: 1.25,
+                    borderBottom: `1px solid ${headerTheme.border}`,
+                    backgroundColor: headerTheme.bg,
+                  }}
+                >
+                  <Typography variant="h6" sx={{ color: '#ffffff', fontWeight: 700 }}>
+                    {section.number ? `${section.number}. ${section.title}` : section.title}
                   </Typography>
-                );
-              })}
-            </Box>
-          </AccordionDetails>
-        </Accordion>
-      ))}
+                </Box>
+
+                <Box sx={{ color: '#cccccc', lineHeight: 1.6, p: 2.5 }}>
+                  {renderSectionContent(section.content)}
+                </Box>
+              </CardContent>
+            </Card>
+              );
+            })()}
+          </Grid>
+        ))}
+      </Grid>
     </Box>
   );
 }

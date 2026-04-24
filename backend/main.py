@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from typing import List
 import os
 import shutil
+import math
 import pandas as pd
 import numpy as np
 from pymongo import MongoClient
@@ -37,16 +38,25 @@ class StockUpdateModel(BaseModel):
     buy_price: float
 
 def to_serializable(val):
+    if val is None:
+        return None
     if isinstance(val, pd.Series):
-        return val.tolist()
+        return [to_serializable(x) for x in val.tolist()]
     if isinstance(val, np.ndarray):
-        return val.tolist()
+        return [to_serializable(x) for x in val.tolist()]
     if isinstance(val, pd.DataFrame):
-        return val.to_dict()
+        return {k: to_serializable(v) for k, v in val.to_dict().items()}
+    if isinstance(val, dict):
+        return {str(k): to_serializable(v) for k, v in val.items()}
+    if isinstance(val, (list, tuple, set)):
+        return [to_serializable(x) for x in val]
     if isinstance(val, (np.floating, float)):
-        return float(val)
+        f = float(val)
+        return f if math.isfinite(f) else None
     if isinstance(val, (np.integer, int)):
         return int(val)
+    if isinstance(val, (np.bool_, bool)):
+        return bool(val)
     return val
 
 @app.post("/stocks")
@@ -102,14 +112,86 @@ def analyze_portfolio():
     analyzer.symbols = symbols
     analyzer.shares = shares
     analyzer.buy_prices = buy_prices
+
     # Fetch data
     analyzer.get_tickers_data(analyzer.symbols)
     if not analyzer.data:
         raise HTTPException(status_code=400, detail="No data fetched for the given symbols.")
-    analyzer.current_prices = [analyzer.data[symbol + ".NS"]['history']['Close'].iloc[-1] for symbol in analyzer.symbols]
+
+    # Keep portfolio arrays aligned with tickers that actually returned valid history.
+    valid_symbols = []
+    valid_ticker_keys = []
+    valid_shares = []
+    valid_buy_prices = []
+    valid_current_prices = []
+
+    for symbol, share, buy_price in zip(symbols, shares, buy_prices):
+        ticker_key = symbol + ".NS"
+        ticker_payload = analyzer.data.get(ticker_key)
+        if not ticker_payload:
+            continue
+
+        close_series = ticker_payload.get("history", pd.DataFrame()).get("Close")
+        if close_series is None or close_series.empty:
+            continue
+
+        valid_symbols.append(symbol)
+        valid_ticker_keys.append(ticker_key)
+        valid_shares.append(float(share))
+        valid_buy_prices.append(float(buy_price))
+        valid_current_prices.append(float(close_series.iloc[-1]))
+
+    if not valid_symbols:
+        raise HTTPException(
+            status_code=400,
+            detail="No valid market history found for the given symbols."
+        )
+
+    # Consolidate duplicate symbols so weights match unique return columns.
+    consolidated = {}
+    for symbol, ticker_key, share, buy_price, current_price in zip(
+        valid_symbols,
+        valid_ticker_keys,
+        valid_shares,
+        valid_buy_prices,
+        valid_current_prices,
+    ):
+        if ticker_key not in consolidated:
+            consolidated[ticker_key] = {
+                "symbol": symbol,
+                "shares": 0.0,
+                "invested": 0.0,
+                "current_price": current_price,
+            }
+
+        consolidated[ticker_key]["shares"] += float(share)
+        consolidated[ticker_key]["invested"] += float(share) * float(buy_price)
+        consolidated[ticker_key]["current_price"] = float(current_price)
+
+    consolidated_keys = list(consolidated.keys())
+    consolidated_symbols = [consolidated[k]["symbol"] for k in consolidated_keys]
+    consolidated_shares = [consolidated[k]["shares"] for k in consolidated_keys]
+    consolidated_buy_prices = [
+        (consolidated[k]["invested"] / consolidated[k]["shares"])
+        if consolidated[k]["shares"] > 0
+        else 0.0
+        for k in consolidated_keys
+    ]
+    consolidated_current_prices = [consolidated[k]["current_price"] for k in consolidated_keys]
+
+    analyzer.symbols = consolidated_symbols
+    analyzer.data = {k: analyzer.data[k] for k in consolidated_keys}
+    analyzer.shares = consolidated_shares
+    analyzer.buy_prices = consolidated_buy_prices
+    analyzer.current_prices = consolidated_current_prices
+
     invested_values = [q * bp for q, bp in zip(analyzer.shares, analyzer.buy_prices)]
     total_invested = sum(invested_values)
+    if total_invested <= 0:
+        raise HTTPException(status_code=400, detail="Total invested amount must be greater than zero.")
+
     analyzer.weights = [iv / total_invested for iv in invested_values]
+
     # Beta analysis
     industry_avg_beta = analyzer.get_industry_avg_beta()
     analyzer.fill_missing_betas(industry_avg_beta)
@@ -135,7 +217,7 @@ def analyze_portfolio():
             "ai": "/files/ai_portfolio_insights.txt"
         }
     }
-    return JSONResponse(content=response)
+    return JSONResponse(content=to_serializable(response))
 
 @app.get("/files/{filename}")
 def get_file(filename: str):

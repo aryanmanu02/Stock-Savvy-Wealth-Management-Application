@@ -1,6 +1,8 @@
 # Visualization functions will go here 
 
 def create_visualizations(data, shares, buy_prices, current_prices, weights, symbols, metrics):
+    import matplotlib
+    matplotlib.use('Agg')
     import matplotlib.pyplot as plt
     import numpy as np
     import pandas as pd
@@ -136,4 +138,4 @@ def create_visualizations(data, shares, buy_prices, current_prices, weights, sym
     ax9.grid(True, alpha=0.3)
     plt.tight_layout()
     plt.savefig('portfolio_analysis.png', dpi=300, bbox_inches='tight')
-    plt.show() 
+    plt.close(fig)

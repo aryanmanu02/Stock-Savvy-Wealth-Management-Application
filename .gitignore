@@ -1,0 +1,15 @@
+Stock-Savvy-Wealth-Management-Application\analysis\__pycache__\
+Stock-Savvy-Wealth-Management-Application\frontend\node_modules\
+
+# Node
+node_modules/
+
+# Python
+__pycache__/
+*.pyc
+
+# Env files
+.env
+
+# Optional
+*.log
